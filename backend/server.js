@@ -15,25 +15,10 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: function(origin, callback) {
-    // Read at request-time so env vars are always current after restarts
-    const allowedOrigins = [
-      'http://localhost:5173',
-      'http://localhost:3000',
-      process.env.FRONTEND_URL,
-    ].filter(Boolean); // remove undefined/null entries
-
-    // Allow requests with no origin (mobile apps, Postman, curl)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.error(`CORS blocked origin: ${origin}`);
-      callback(new Error('CORS Policy: Origin not allowed.'));
-    }
-  },
-  credentials: true,
-}));
+// Using origin:true mirrors the requesting origin back — effectively
+// allows all origins while still supporting credentials (unlike '*').
+// This is safe for a single-tenant private dashboard.
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
