@@ -5,6 +5,7 @@ import moment from 'moment';
 import { format } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useAuth } from '../context/AuthContext';
+import API_BASE from '../config/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Users, MapPin, Loader2, AlertCircle, Calendar as CalendarIcon } from 'lucide-react';
 
@@ -25,7 +26,7 @@ const CalendarView = () => {
   useEffect(() => {
     const fetchCalendarEvents = async () => {
       try {
-        const res = await fetch('/api/calendar', {
+        const res = await fetch(`${API_BASE}/api/calendar`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch calendar');

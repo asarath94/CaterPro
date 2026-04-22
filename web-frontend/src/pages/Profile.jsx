@@ -4,6 +4,7 @@ import {
   Loader2, Building2, User, MapPin, Phone, Mail,
   Camera, CheckCircle, AlertCircle, Upload, Plus, Trash2, Pencil, X, Check
 } from 'lucide-react';
+import API_BASE from '../config/api';
 
 // Reusable multi-entry list editor (phones or emails)
 const MultiEntryField = ({ icon: Icon, label, placeholder, type = 'text', items, onChange }) => {
@@ -130,7 +131,7 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch('/api/auth/me', {
+        const res = await fetch(`${API_BASE}/api/auth/me`, {
           headers: { 'Authorization': `Bearer ${token}` },
         });
         if (!res.ok) throw new Error('Failed to load profile');
@@ -184,7 +185,7 @@ const Profile = () => {
       formData.append('contactEmails', JSON.stringify(profile.contactEmails));
       if (logoFile) formData.append('businessLogo', logoFile);
 
-      const res = await fetch('/api/auth/profile', {
+      const res = await fetch(`${API_BASE}/api/auth/profile`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData,

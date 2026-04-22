@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Users, Phone, Mail, MapPin, Loader2, AlertCircle, Search, X, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
+import API_BASE from '../config/api';
 
 const Customers = () => {
   const [customers, setCustomers] = useState([]);
@@ -15,7 +16,7 @@ const Customers = () => {
   useEffect(() => {
     const fetchCustomers = async () => {
       try {
-        const res = await fetch('/api/customers', {
+        const res = await fetch(`${API_BASE}/api/customers`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!res.ok) throw new Error('Failed to fetch customers');

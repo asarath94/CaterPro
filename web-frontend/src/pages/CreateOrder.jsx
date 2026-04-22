@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, useParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Trash2, Calendar, MapPin, Users, Loader2, AlertCircle, ArrowRight, Save, Utensils } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import API_BASE from '../config/api';
 
 const CreateOrder = () => {
   const { id } = useParams();
@@ -30,8 +31,8 @@ const CreateOrder = () => {
     const fetchInitialData = async () => {
       try {
         const [cRes, mRes] = await Promise.all([
-          fetch('/api/customers', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/menu', { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch(`${API_BASE}/api/customers`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE}/api/menu`, { headers: { 'Authorization': `Bearer ${token}` } })
         ]);
         
         if (!cRes.ok || !mRes.ok) throw new Error('Failed to fetch required database constraints.');
@@ -44,7 +45,7 @@ const CreateOrder = () => {
 
         // HIJACK FOR EDIT MODE
         if (id) {
-          const oRes = await fetch(`/api/orders/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
+          const oRes = await fetch(`${API_BASE}/api/orders/${id}`, { headers: { 'Authorization': `Bearer ${token}` } });
           if (!oRes.ok) throw new Error('Failed to fetch order details for editing.');
           const orderData = await oRes.json();
           
@@ -194,7 +195,7 @@ const CreateOrder = () => {
         }
       }
 
-      const url = id ? `/api/orders/${id}` : '/api/orders';
+      const url = id ? `${API_BASE}/api/orders/${id}` : `${API_BASE}/api/orders`;
       const method = id ? 'PUT' : 'POST';
 
       const res = await fetch(url, {

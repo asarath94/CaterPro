@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, AlertCircle, Calendar, MapPin, Users, ClipboardList } from 'lucide-react';
 import clsx from 'clsx';
+import API_BASE from '../config/api';
 
 const Orders = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
@@ -17,7 +18,7 @@ const Orders = () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/orders?filter=${filter}`, {
+      const res = await fetch(`${API_BASE}/api/orders?filter=${filter}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

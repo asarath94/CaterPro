@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Phone, Mail, MapPin, Loader2, AlertCircle, Calendar, ArrowLeft, Plus, Edit2, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
+import API_BASE from '../config/api';
 
 const CustomerDetail = () => {
   const { id } = useParams();
@@ -19,7 +20,7 @@ const CustomerDetail = () => {
       try {
         setLoading(true);
         // Fetch Customer
-        const cRes = await fetch(`/api/customers/${id}`, {
+        const cRes = await fetch(`${API_BASE}/api/customers/${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (!cRes.ok) throw new Error('Customer not found');
@@ -27,7 +28,7 @@ const CustomerDetail = () => {
         setCustomer(cData);
 
         // Fetch Orders tailored exactly to this customer
-        const oRes = await fetch(`/api/orders?customerId=${id}`, {
+        const oRes = await fetch(`${API_BASE}/api/orders?customerId=${id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         if (oRes.ok) {
@@ -47,7 +48,7 @@ const CustomerDetail = () => {
   const handleDelete = async () => {
     if (!window.confirm('WARNING: Are you sure you want to permanently delete this customer?')) return;
     try {
-      const res = await fetch(`/api/customers/${id}`, {
+      const res = await fetch(`${API_BASE}/api/customers/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

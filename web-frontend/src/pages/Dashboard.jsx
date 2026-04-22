@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Users, CalendarDays, Utensils, ArrowRight, Clock, MapPin, PlusCircle, ChefHat, Contact2, Loader2, AlertCircle } from 'lucide-react';
+import API_BASE from '../config/api';
 
 const Dashboard = () => {
   const { token, user } = useAuth();
@@ -21,9 +22,9 @@ const Dashboard = () => {
     const fetchDashboardData = async () => {
       try {
         const [cRes, mRes, oRes] = await Promise.all([
-          fetch('/api/customers', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/menu', { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/orders?filter=upcoming', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE}/api/customers`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE}/api/menu`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE}/api/orders?filter=upcoming`, { headers: { 'Authorization': `Bearer ${token}` } }),
         ]);
 
         if (!cRes.ok || !mRes.ok || !oRes.ok) throw new Error('Failed to synchronize dashboard metrics');

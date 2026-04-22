@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import API_BASE from '../config/api';
 import { motion } from 'framer-motion';
 import { Loader2, AlertCircle } from 'lucide-react';
 
@@ -16,7 +17,7 @@ const Login = () => {
     setError('');
 
     try {
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch(`${API_BASE}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

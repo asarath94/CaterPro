@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, AlertCircle, Plus, Trash2, Edit2, ListChecks } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import API_BASE from '../config/api';
 
 const MenuSettings = () => {
   const { token } = useAuth();
@@ -26,8 +27,8 @@ const MenuSettings = () => {
   const fetchDependencies = async () => {
     try {
       const [mRes, cRes] = await Promise.all([
-        fetch('/api/menu', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('/api/menu/categories', { headers: { 'Authorization': `Bearer ${token}` } })
+        fetch(`${API_BASE}/api/menu`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`${API_BASE}/api/menu/categories`, { headers: { 'Authorization': `Bearer ${token}` } })
       ]);
       
       if (!mRes.ok || !cRes.ok) throw new Error('Failed to fetch master data');
@@ -75,7 +76,7 @@ const MenuSettings = () => {
     if (!window.confirm('WARNING: Deleting this item removes it permanently. Proceed?')) return;
     
     try {
-      const res = await fetch(`/api/menu/${id}`, {
+      const res = await fetch(`${API_BASE}/api/menu/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -91,7 +92,7 @@ const MenuSettings = () => {
      e.preventDefault();
      setIsSubmittingCat(true);
      try {
-        const res = await fetch('/api/menu/categories', {
+        const res = await fetch(`${API_BASE}/api/menu/categories`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ name: catName })
@@ -112,7 +113,7 @@ const MenuSettings = () => {
   const handleDelCat = async (id) => {
     if (!window.confirm('Deleting this Master Category removes it from the Dropdown permanently (Items using it will not be deleted but may be orphaned). Proceed?')) return;
     try {
-      const res = await fetch(`/api/menu/categories/${id}`, {
+      const res = await fetch(`${API_BASE}/api/menu/categories/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -131,7 +132,7 @@ const MenuSettings = () => {
     const method = editingId ? 'PUT' : 'POST';
 
     try {
-      const res = await fetch(url, {
+      const res = await fetch(editingId ? `${API_BASE}/api/menu/${editingId}` : `${API_BASE}/api/menu`, {
         method,
         headers: {
           'Content-Type': 'application/json',

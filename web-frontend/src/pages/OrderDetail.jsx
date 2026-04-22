@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, AlertCircle, ArrowLeft, Download, Calendar, MapPin, Users, Printer, FileText, Trash2, Edit } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
+import API_BASE from '../config/api';
 
 const OrderDetail = () => {
   const { id } = useParams();
@@ -24,8 +25,8 @@ const OrderDetail = () => {
     const fetchAll = async () => {
       try {
         const [orderRes, profileRes] = await Promise.all([
-          fetch(`/api/orders/${id}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch('/api/auth/me', { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE}/api/orders/${id}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+          fetch(`${API_BASE}/api/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } }),
         ]);
         if (!orderRes.ok) throw new Error('Order not found');
         const orderData = await orderRes.json();
@@ -45,7 +46,7 @@ const OrderDetail = () => {
     if (!window.confirm('WARNING: Are you sure you want to permanently delete this Event Order?')) return;
     
     try {
-      const res = await fetch(`/api/orders/${id}`, {
+      const res = await fetch(`${API_BASE}/api/orders/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

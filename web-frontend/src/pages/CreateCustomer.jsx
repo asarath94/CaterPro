@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Camera, Upload, X, Loader2, AlertCircle } from 'lucide-react';
+import API_BASE from '../config/api';
 
 const CreateCustomer = () => {
   const location = useLocation();
@@ -104,7 +105,7 @@ const CreateCustomer = () => {
         data.append('photo', imageFile);
       }
 
-      const url = isEditMode ? `/api/customers/${editCustomer._id}` : '/api/customers';
+      const url = isEditMode ? `${API_BASE}/api/customers/${editCustomer._id}` : `${API_BASE}/api/customers`;
       const method = isEditMode ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
