@@ -37,7 +37,7 @@ const Customers = () => {
   }, [customers, searchQuery]);
 
   return (
-    <div className="p-8 max-w-7xl mx-auto h-full overflow-y-auto">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto h-full overflow-y-auto">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-8 gap-4">
         <div className="w-full md:w-auto">
           <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-1">Customer Directory</h1>

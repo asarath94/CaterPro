@@ -159,31 +159,33 @@ const MenuSettings = () => {
       {items.length === 0 ? (
         <p className="p-6 text-slate-500 italic">No items created for this category yet.</p>
       ) : (
-        <table className="w-full text-left text-sm text-slate-600">
-          <thead className={`text-xs uppercase bg-slate-50 ${themeClass}`}>
-            <tr>
-              <th className="px-6 py-4 font-bold">Sub-Category</th>
-              <th className="px-6 py-4 font-bold">Item Name</th>
-              <th className="px-6 py-4 font-bold text-right">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map(item => (
-              <tr key={item._id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
-                <td className="px-6 py-4 font-semibold text-slate-900">{item.subCategory}</td>
-                <td className="px-6 py-4">{item.itemName}</td>
-                <td className="px-6 py-4 flex justify-end gap-3">
-                  <button onClick={() => handleEditClick(item)} className="text-blue-600 hover:text-blue-800 transition p-1 hover:bg-blue-50 rounded" title="Edit">
-                     <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-700 transition p-1 hover:bg-red-50 rounded" title="Delete">
-                     <Trash2 className="w-4 h-4" />
-                  </button>
-                </td>
+        <div className="overflow-x-auto w-full">
+          <table className="w-full text-left text-sm text-slate-600 whitespace-nowrap min-w-[500px]">
+            <thead className={`text-xs uppercase bg-slate-50 ${themeClass}`}>
+              <tr>
+                <th className="px-6 py-4 font-bold">Sub-Category</th>
+                <th className="px-6 py-4 font-bold">Item Name</th>
+                <th className="px-6 py-4 font-bold text-right">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map(item => (
+                <tr key={item._id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 font-semibold text-slate-900">{item.subCategory}</td>
+                  <td className="px-6 py-4">{item.itemName}</td>
+                  <td className="px-6 py-4 flex justify-end gap-3">
+                    <button onClick={() => handleEditClick(item)} className="text-blue-600 hover:text-blue-800 transition p-1 hover:bg-blue-50 rounded" title="Edit">
+                       <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => handleDelete(item._id)} className="text-red-500 hover:text-red-700 transition p-1 hover:bg-red-50 rounded" title="Delete">
+                       <Trash2 className="w-4 h-4" />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

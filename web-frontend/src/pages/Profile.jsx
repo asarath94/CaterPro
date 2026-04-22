@@ -223,7 +223,7 @@ const Profile = () => {
   );
 
   return (
-    <div className="p-8 max-w-3xl mx-auto overflow-y-auto h-full pb-20">
+    <div className="p-4 sm:p-8 max-w-3xl mx-auto overflow-y-auto h-full pb-20">
       <div className="mb-8">
         <h1 className="text-3xl font-black text-slate-900 tracking-tight">Business Profile</h1>
         <p className="text-slate-500 font-medium mt-1">Manage your catering business identity and contact details.</p>
@@ -232,9 +232,9 @@ const Profile = () => {
       <form onSubmit={handleSubmit} className="space-y-8">
 
         {/* Logo Upload Card */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
-          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Business Logo</h2>
-          <div className="flex items-center gap-8">
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm">
+          <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6 text-center sm:text-left">Business Logo</h2>
+          <div className="flex flex-col sm:flex-row items-center gap-6 sm:gap-8 text-center sm:text-left">
             <div
               onClick={() => fileInputRef.current?.click()}
               className="w-28 h-28 rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 flex items-center justify-center overflow-hidden cursor-pointer hover:border-blue-400 hover:bg-blue-50 transition-all group flex-shrink-0"
@@ -262,7 +262,7 @@ const Profile = () => {
         </div>
 
         {/* Business Details Card */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm">
           <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Business Details</h2>
           <div className="space-y-5">
             <div>
@@ -299,7 +299,7 @@ const Profile = () => {
         </div>
 
         {/* Contact Details Card — Dynamic Multi-Entry */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-8 shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-3xl p-6 sm:p-8 shadow-sm">
           <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Contact Information</h2>
           <div className="space-y-7">
 

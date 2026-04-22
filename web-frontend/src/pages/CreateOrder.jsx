@@ -228,7 +228,7 @@ const CreateOrder = () => {
   if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
 
   return (
-    <div className="p-8 max-w-5xl mx-auto h-full overflow-y-auto">
+    <div className="p-4 sm:p-8 max-w-5xl mx-auto h-full overflow-y-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight text-slate-900 mb-1">{id ? 'Edit Event Order' : 'Book New Event'}</h1>
         <p className="text-slate-500 font-medium">{id ? 'Update logistics or menu selections.' : 'Construct a multi-day catering itinerary.'}</p>
@@ -243,7 +243,7 @@ const CreateOrder = () => {
       <form onSubmit={handleSubmit} className="space-y-6 pb-24">
         
         {/* Core Customer Info */}
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div className="bg-white p-5 sm:p-6 rounded-2xl border border-slate-200 shadow-sm">
           <h2 className="text-xl font-bold text-slate-900 mb-4">Client Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
@@ -300,7 +300,7 @@ const CreateOrder = () => {
                   )}
                 </div>
                 
-                <div className="p-6">
+                <div className="p-4 sm:p-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Event Name</label>
@@ -358,7 +358,7 @@ const CreateOrder = () => {
         </button>
 
         {/* Floating Submit Bar */}
-        <div className="fixed bottom-0 left-0 right-0 md:left-64 bg-white border-t border-slate-200 p-4 px-8 flex justify-between items-center z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+        <div className="fixed bottom-0 left-0 right-0 md:left-64 bg-white border-t border-slate-200 p-4 px-4 sm:px-8 flex justify-between items-center z-30 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
           <p className="text-slate-500 font-medium hidden sm:block">Double check all event dates before submitting.</p>
           <button 
             type="submit" 

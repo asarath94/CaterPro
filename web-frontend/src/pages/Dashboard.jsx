@@ -75,7 +75,7 @@ const Dashboard = () => {
   if (error) return <div className="p-8 text-red-600"><AlertCircle className="w-6 h-6 inline mr-2"/> {error}</div>;
 
   return (
-    <div className="p-8 max-w-7xl mx-auto overflow-y-auto h-full pb-20 space-y-8">
+    <div className="p-4 sm:p-8 max-w-7xl mx-auto overflow-y-auto h-full pb-20 space-y-8">
       
       {/* Header */}
       <div>
