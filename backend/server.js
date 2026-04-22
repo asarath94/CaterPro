@@ -15,16 +15,24 @@ dotenv.config();
 const app = express();
 
 // Middleware
-const allowedOrigins = ['http://localhost:5173', process.env.FRONTEND_URL];
 app.use(cors({
   origin: function(origin, callback) {
-    // allow requests with no origin (like mobile apps/postman) or whitelisted domains
+    // Read at request-time so env vars are always current after restarts
+    const allowedOrigins = [
+      'http://localhost:5173',
+      'http://localhost:3000',
+      process.env.FRONTEND_URL,
+    ].filter(Boolean); // remove undefined/null entries
+
+    // Allow requests with no origin (mobile apps, Postman, curl)
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Strict CORS Policy: Origin not allowed.'));
+      console.error(`CORS blocked origin: ${origin}`);
+      callback(new Error('CORS Policy: Origin not allowed.'));
     }
-  }
+  },
+  credentials: true,
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
