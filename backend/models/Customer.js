@@ -27,4 +27,8 @@ const customerSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// Indexes for fast lookups
+customerSchema.index({ name: 1 });
+customerSchema.index({ phone: 1 });
+
 module.exports = mongoose.model('Customer', customerSchema);

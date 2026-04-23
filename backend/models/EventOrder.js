@@ -47,4 +47,9 @@ const eventOrderSchema = new mongoose.Schema({
   timestamps: true,
 });
 
+// Indexes for fast order queries
+eventOrderSchema.index({ customer: 1 });          // fetch orders by customer
+eventOrderSchema.index({ 'subEvents.date': 1 });   // sort/filter by event date
+eventOrderSchema.index({ status: 1 });             // filter by status
+
 module.exports = mongoose.model('EventOrder', eventOrderSchema);
