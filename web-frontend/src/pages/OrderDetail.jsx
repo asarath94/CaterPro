@@ -1,19 +1,28 @@
-import { useState, useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, AlertCircle, ArrowLeft, Download, Calendar, MapPin, Users, Printer, FileText, Trash2, Edit } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
-import API_BASE from '../config/api';
+import useSWR from 'swr';
+import { fetcherWithToken, apiUrl } from '../config/fetcher';
 
 const OrderDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token } = useAuth();
 
-  const [order, setOrder] = useState(null);
-  const [business, setBusiness] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { data: order, error: orderError, isLoading: orderLoading } = useSWR(
+    token ? [apiUrl(`/api/orders/${id}`), token] : null,
+    fetcherWithToken
+  );
+
+  const { data: business, error: businessError, isLoading: businessLoading } = useSWR(
+    token ? [apiUrl('/api/auth/me'), token] : null,
+    fetcherWithToken
+  );
+
+  const isLoading = orderLoading || businessLoading;
+  const error = orderError || businessError;
   
   const contentRef = useRef(null);
   const handlePrint = useReactToPrint({
@@ -21,32 +30,12 @@ const OrderDetail = () => {
     documentTitle: `Catering_Manifest_${order?.customer?.name.replace(/\s+/g, '_')}_${order?._id.slice(-6)}`,
   });
 
-  useEffect(() => {
-    const fetchAll = async () => {
-      try {
-        const [orderRes, profileRes] = await Promise.all([
-          fetch(`${API_BASE}/api/orders/${id}`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API_BASE}/api/auth/me`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        ]);
-        if (!orderRes.ok) throw new Error('Order not found');
-        const orderData = await orderRes.json();
-        const profileData = profileRes.ok ? await profileRes.json() : {};
-        setOrder(orderData);
-        setBusiness(profileData);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAll();
-  }, [id, token]);
 
   const handleDeleteOrder = async () => {
     if (!window.confirm('WARNING: Are you sure you want to permanently delete this Event Order?')) return;
     
     try {
-      const res = await fetch(`${API_BASE}/api/orders/${id}`, {
+      const res = await fetch(apiUrl(`/api/orders/${id}`), {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -59,8 +48,8 @@ const OrderDetail = () => {
 
   // Use React-to-Print over html2pdf
 
-  if (loading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
-  if (error) return <div className="p-8 text-red-600"><AlertCircle className="w-6 h-6 inline mr-2"/> {error}</div>;
+  if (isLoading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
+  if (error) return <div className="p-8 text-red-600"><AlertCircle className="w-6 h-6 inline mr-2"/> {error.message}</div>;
   if (!order) return null;
 
   return (

@@ -36,8 +36,8 @@ const Dashboard = () => {
       .slice(0, 3);
   }, [upcomingOrders]);
 
-  if (loading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
-  if (error) return <div className="p-8 text-red-600"><AlertCircle className="w-6 h-6 inline mr-2"/> {error}</div>;
+  if (isLoading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
+  if (error) return <div className="p-8 text-red-600"><AlertCircle className="w-6 h-6 inline mr-2"/> {error.message}</div>;
 
   return (
     <div className="p-4 sm:p-8 max-w-7xl mx-auto overflow-y-auto h-full pb-20 space-y-8">

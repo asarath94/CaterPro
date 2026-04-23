@@ -1,54 +1,33 @@
-import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Phone, Mail, MapPin, Loader2, AlertCircle, Calendar, ArrowLeft, Plus, Edit2, Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import API_BASE from '../config/api';
+import useSWR from 'swr';
+import { fetcherWithToken, apiUrl } from '../config/fetcher';
 
 const CustomerDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { token } = useAuth();
   
-  const [customer, setCustomer] = useState(null);
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const { data: customer, error: customerError, isLoading: customerLoading } = useSWR(
+    token ? [apiUrl(`/api/customers/${id}`), token] : null,
+    fetcherWithToken
+  );
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // Fetch Customer
-        const cRes = await fetch(`${API_BASE}/api/customers/${id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!cRes.ok) throw new Error('Customer not found');
-        const cData = await cRes.json();
-        setCustomer(cData);
+  const { data: orders = [], error: ordersError, isLoading: ordersLoading } = useSWR(
+    token ? [apiUrl(`/api/orders?customerId=${id}`), token] : null,
+    fetcherWithToken
+  );
 
-        // Fetch Orders tailored exactly to this customer
-        const oRes = await fetch(`${API_BASE}/api/orders?customerId=${id}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (oRes.ok) {
-          const oData = await oRes.json();
-          setOrders(oData);
-        }
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchData();
-  }, [id, token]);
+  const isLoading = customerLoading || ordersLoading;
+  const error = customerError || ordersError;
+
 
   const handleDelete = async () => {
     if (!window.confirm('WARNING: Are you sure you want to permanently delete this customer?')) return;
     try {
-      const res = await fetch(`${API_BASE}/api/customers/${id}`, {
+      const res = await fetch(apiUrl(`/api/customers/${id}`), {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -59,9 +38,18 @@ const CustomerDetail = () => {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
-  if (error) return <div className="p-8 text-red-600"><AlertCircle className="w-6 h-6 inline mr-2"/> {error}</div>;
-  if (!customer) return null;
+  if (isLoading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
+  
+  if (error) return (
+    <div className="p-8 max-w-2xl mx-auto">
+      <div className="p-4 bg-red-100 text-red-700 rounded-lg flex items-center gap-2">
+        <AlertCircle className="w-5 h-5" /> {error.message}
+      </div>
+      <button onClick={() => navigate('/customers')} className="mt-4 flex items-center gap-2 text-slate-600 hover:text-slate-900">
+        <ArrowLeft className="w-4 h-4" /> Back to Directory
+      </button>
+    </div>
+  );
 
   return (
     <div className="p-8 max-w-5xl mx-auto overflow-y-auto h-full">

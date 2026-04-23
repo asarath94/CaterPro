@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, AlertCircle, Plus, Trash2, Edit2, ListChecks } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,6 +22,26 @@ const MenuSettings = () => {
 
   const loading = menuLoading || catLoading;
   const error = menuError || catError;
+
+  // Form State
+  const [isSubmittingItem, setIsSubmittingItem] = useState(false);
+  const [isSubmittingCat, setIsSubmittingCat] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  
+  const [catName, setCatName] = useState('');
+  
+  const [formData, setFormData] = useState({
+    category: 'Veg',
+    subCategory: '',
+    itemName: ''
+  });
+
+  // Sync subCategory when categories load
+  useEffect(() => {
+    if (subCats.length > 0 && !formData.subCategory) {
+      setFormData(prev => ({ ...prev, subCategory: subCats[0].name }));
+    }
+  }, [subCats]);
 
 
   const handleInputChange = (e) => {
@@ -171,7 +191,7 @@ const MenuSettings = () => {
 
       {error ? (
         <div className="mb-6 p-4 bg-red-100 text-red-700 rounded-xl flex items-center gap-2">
-          <AlertCircle className="w-5 h-5 flex-shrink-0" /> {error}
+          <AlertCircle className="w-5 h-5 flex-shrink-0" /> {error.message}
         </div>
       ) : (
         <div className="flex flex-col lg:flex-row gap-8 pb-12">

@@ -12,7 +12,7 @@ const Orders = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  const { data: orders = [], error, isLoading } = useSWR(
+  const { data: orders = [], error, isLoading, mutate } = useSWR(
     token ? [apiUrl(`/api/orders?filter=${activeTab}`), token] : null,
     fetcherWithToken
   );
@@ -58,7 +58,7 @@ const Orders = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 relative">
-        {loading ? (
+        {isLoading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
           </div>
@@ -66,9 +66,9 @@ const Orders = () => {
           <div className="p-6 bg-red-50 border border-red-100 rounded-2xl flex flex-col items-center justify-center text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
             <h3 className="text-lg font-bold text-red-900">Oops, something went wrong.</h3>
-            <p className="text-red-700">{error}</p>
+            <p className="text-red-700">{error.message}</p>
             <button 
-              onClick={() => fetchOrders(activeTab)}
+              onClick={() => mutate()}
               className="mt-4 px-4 py-2 bg-red-100 text-red-800 font-semibold rounded-lg hover:bg-red-200 transition-colors"
             >
               Try Again

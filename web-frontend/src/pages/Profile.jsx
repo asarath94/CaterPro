@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import {
   Loader2, Building2, User, MapPin, Phone, Mail,
   Camera, CheckCircle, AlertCircle, Upload, Plus, Trash2, Pencil, X, Check
 } from 'lucide-react';
-import API_BASE from '../config/api';
+import useSWR from 'swr';
+import { fetcherWithToken, apiUrl } from '../config/fetcher';
 
 // Reusable multi-entry list editor (phones or emails)
 const MultiEntryField = ({ icon: Icon, label, placeholder, type = 'text', items, onChange }) => {
@@ -122,38 +123,34 @@ const Profile = () => {
 
   const [logoPreview, setLogoPreview] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState('');
   const fileInputRef = useRef(null);
 
+  const { data: userData, error: swrError, isLoading: loading } = useSWR(
+    token ? [apiUrl('/api/auth/me'), token] : null,
+    fetcherWithToken
+  );
+
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/auth/me`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error('Failed to load profile');
-        const data = await res.json();
-        setProfile({
-          businessName: data.businessName || '',
-          proprietorName: data.proprietorName || '',
-          address: data.address || '',
-          email: data.email || '',
-          phones: data.phones || [],
-          contactEmails: data.contactEmails || [],
-          businessLogo: data.businessLogo || '',
-        });
-        if (data.businessLogo) setLogoPreview(data.businessLogo);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfile();
-  }, [token]);
+    if (userData && !profile.businessName && !profile.proprietorName) {
+      setProfile({
+        businessName: userData.businessName || '',
+        proprietorName: userData.proprietorName || '',
+        address: userData.address || '',
+        email: userData.email || '',
+        phones: userData.phones || [],
+        contactEmails: userData.contactEmails || [],
+        businessLogo: userData.businessLogo || '',
+      });
+      if (userData.businessLogo) setLogoPreview(userData.businessLogo);
+    }
+  }, [userData]);
+
+  useEffect(() => {
+    if (swrError) setError(swrError.message);
+  }, [swrError]);
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -175,25 +172,24 @@ const Profile = () => {
     setSuccess(false);
 
     try {
-      const formData = new FormData();
-      formData.append('businessName', profile.businessName);
-      formData.append('proprietorName', profile.proprietorName);
-      formData.append('address', profile.address);
-      formData.append('email', profile.email);
-      // Arrays must be JSON-stringified for FormData transport
-      formData.append('phones', JSON.stringify(profile.phones));
-      formData.append('contactEmails', JSON.stringify(profile.contactEmails));
-      if (logoFile) formData.append('businessLogo', logoFile);
+      const fd = new FormData();
+      fd.append('businessName', profile.businessName);
+      fd.append('proprietorName', profile.proprietorName);
+      fd.append('address', profile.address);
+      fd.append('email', profile.email);
+      fd.append('phones', JSON.stringify(profile.phones));
+      fd.append('contactEmails', JSON.stringify(profile.contactEmails));
+      if (logoFile) fd.append('businessLogo', logoFile);
 
-      const res = await fetch(`${API_BASE}/api/auth/profile`, {
+      const res = await fetch(apiUrl('/api/auth/profile'), {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` },
-        body: formData,
+        body: fd
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || 'Failed to save profile');
+        throw new Error(err.message || 'Failed to update profile');
       }
 
       const updated = await res.json();
