@@ -72,7 +72,7 @@ export default function DashboardScreen({ navigation }) {
                             <Text style={styles.avatarText}>{admin?.businessName?.[0]?.toUpperCase() || 'C'}</Text>
                         </View>
                     )}
-                    <Text style={styles.adminName} numberOfLines={1}>{admin?.businessName || 'Catering Dashboard'}</Text>
+                    <Text style={styles.adminName} numberOfLines={2}>{admin?.businessName || 'Catering Dashboard'}</Text>
                 </View>
                 
                 <TouchableOpacity onPress={() => setOptionsVisible(true)} style={{padding: 5}}>
@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#f3f4f6' },
     center: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#f3f4f6' },
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 60, backgroundColor: '#0f172a', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 10, elevation: 5 },
-    adminName: { color: '#fff', fontSize: 26, fontWeight: '900', marginLeft: 16, maxWidth: '78%' },
+    adminName: { color: '#fff', fontSize: 18, fontWeight: '900', marginLeft: 16, maxWidth: '70%', lineHeight: 22 },
     avatarLogo: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#fff', borderWidth: 2, borderColor: '#3b82f6' },
     avatar: { width: 56, height: 56, borderRadius: 28, backgroundColor: '#3b82f6', justifyContent: 'center', alignItems: 'center' },
     avatarText: { color: '#fff', fontSize: 26, fontWeight: 'bold' },
