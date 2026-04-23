@@ -1,58 +1,28 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Loader2, AlertCircle, Plus, Trash2, Edit2, ListChecks } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import API_BASE from '../config/api';
+import useSWR, { useSWRConfig } from 'swr';
+import { fetcherWithToken, apiUrl } from '../config/fetcher';
 
 const MenuSettings = () => {
   const { token } = useAuth();
-  const [menuItems, setMenuItems] = useState([]);
-  const [subCats, setSubCats] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-
-  // Form State
-  const [isSubmittingItem, setIsSubmittingItem] = useState(false);
-  const [isSubmittingCat, setIsSubmittingCat] = useState(false);
-  const [editingId, setEditingId] = useState(null);
+  const { mutate } = useSWRConfig();
   
-  const [catName, setCatName] = useState('');
+  // Fetch Data
+  const { data: menuItems = [], error: menuError, isLoading: menuLoading } = useSWR(
+    token ? [apiUrl('/api/menu'), token] : null,
+    fetcherWithToken
+  );
   
-  const [formData, setFormData] = useState({
-    category: 'Veg',
-    subCategory: '',
-    itemName: ''
-  });
+  const { data: subCats = [], error: catError, isLoading: catLoading } = useSWR(
+    token ? [apiUrl('/api/menu/categories'), token] : null,
+    fetcherWithToken
+  );
 
-  const fetchDependencies = async () => {
-    try {
-      const [mRes, cRes] = await Promise.all([
-        fetch(`${API_BASE}/api/menu`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch(`${API_BASE}/api/menu/categories`, { headers: { 'Authorization': `Bearer ${token}` } })
-      ]);
-      
-      if (!mRes.ok || !cRes.ok) throw new Error('Failed to fetch master data');
-      
-      const mData = await mRes.ok ? await mRes.json() : [];
-      const cData = await cRes.ok ? await cRes.json() : [];
-      
-      setMenuItems(mData);
-      setSubCats(cData);
-      
-      // Preset form
-      if (cData.length > 0) {
-         setFormData(prev => ({ ...prev, subCategory: prev.subCategory || cData[0].name }));
-      }
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const loading = menuLoading || catLoading;
+  const error = menuError || catError;
 
-  useEffect(() => {
-    fetchDependencies();
-  }, []);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -76,13 +46,13 @@ const MenuSettings = () => {
     if (!window.confirm('WARNING: Deleting this item removes it permanently. Proceed?')) return;
     
     try {
-      const res = await fetch(`${API_BASE}/api/menu/${id}`, {
+      const res = await fetch(`${apiUrl('/api/menu')}/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (!res.ok) throw new Error('Failed to delete item.');
       
-      setMenuItems(menuItems.filter(item => item._id !== id));
+      mutate([apiUrl('/api/menu'), token]);
     } catch (err) {
       alert(err.message);
     }
@@ -92,17 +62,17 @@ const MenuSettings = () => {
      e.preventDefault();
      setIsSubmittingCat(true);
      try {
-        const res = await fetch(`${API_BASE}/api/menu/categories`, {
+        const res = await fetch(apiUrl('/api/menu/categories'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
           body: JSON.stringify({ name: catName })
         });
         if (!res.ok) {
-           const err = await res.json();
-           throw new Error(err.message || 'Failed to add category');
+           const errData = await res.json();
+           throw new Error(errData.message || 'Failed to add category');
         }
-        await fetchDependencies();
         setCatName('');
+        mutate([apiUrl('/api/menu/categories'), token]);
      } catch(err) {
         alert(err.message);
      } finally {
@@ -113,12 +83,12 @@ const MenuSettings = () => {
   const handleDelCat = async (id) => {
     if (!window.confirm('Deleting this Master Category removes it from the Dropdown permanently (Items using it will not be deleted but may be orphaned). Proceed?')) return;
     try {
-      const res = await fetch(`${API_BASE}/api/menu/categories/${id}`, {
+      const res = await fetch(`${apiUrl('/api/menu/categories')}/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
-      if (!res.ok) throw new Error('Failed.');
-      await fetchDependencies();
+      if (!res.ok) throw new Error('Failed to delete category');
+      mutate([apiUrl('/api/menu/categories'), token]);
     } catch(e) { alert(e.message); }
   };
 
@@ -128,11 +98,10 @@ const MenuSettings = () => {
     
     setIsSubmittingItem(true);
     
-    const url = editingId ? `/api/menu/${editingId}` : '/api/menu';
-    const method = editingId ? 'PUT' : 'POST';
-
     try {
-      const res = await fetch(editingId ? `${API_BASE}/api/menu/${editingId}` : `${API_BASE}/api/menu`, {
+      const url = editingId ? `${apiUrl('/api/menu')}/${editingId}` : apiUrl('/api/menu');
+      const method = editingId ? 'PUT' : 'POST';
+      const res = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
@@ -142,7 +111,7 @@ const MenuSettings = () => {
       });
       
       if (!res.ok) throw new Error('Failed to save menu item.');
-      await fetchDependencies();
+      mutate([apiUrl('/api/menu'), token]);
       resetForm();
     } catch (err) {
       alert(err.message);

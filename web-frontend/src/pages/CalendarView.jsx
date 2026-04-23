@@ -1,20 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, momentLocalizer } from 'react-big-calendar';
 import moment from 'moment';
 import { format } from 'date-fns';
 import 'react-big-calendar/lib/css/react-big-calendar.css';
 import { useAuth } from '../context/AuthContext';
-import API_BASE from '../config/api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Users, MapPin, Loader2, AlertCircle, Calendar as CalendarIcon } from 'lucide-react';
+import useSWR from 'swr';
+import { fetcherWithToken, apiUrl } from '../config/fetcher';
 
 const localizer = momentLocalizer(moment);
 
 const CalendarView = () => {
-  const [events, setEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [selectedDate, setSelectedDate] = useState(null);
   const [dayEvents, setDayEvents] = useState([]);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -23,31 +21,18 @@ const CalendarView = () => {
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchCalendarEvents = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/calendar`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Failed to fetch calendar');
-        const data = await res.json();
-        
-        const formattedEvents = data.map(item => ({
-          ...item,
-          start: new Date(item.start),
-          end: new Date(item.end)
-        }));
-        
-        setEvents(formattedEvents);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchCalendarEvents();
-  }, [token]);
+  const { data: rawEvents = [], error, isLoading } = useSWR(
+    token ? [apiUrl('/api/calendar'), token] : null,
+    fetcherWithToken
+  );
+
+  const events = useMemo(() =>
+    rawEvents.map(item => ({
+      ...item,
+      start: new Date(item.start),
+      end: new Date(item.end)
+    })),
+  [rawEvents]);
 
   const handleSelectSlot = (slotInfo) => {
     const clickedDate = new Date(slotInfo.start);
@@ -74,12 +59,12 @@ const CalendarView = () => {
       
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" /> {error}
+          <AlertCircle className="w-5 h-5" /> {error.message}
         </div>
       )}
 
       <div className="flex-1 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 relative z-0">
-        {loading ? (
+        {isLoading ? (
              <div className="absolute inset-0 flex items-center justify-center">
                  <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
              </div>

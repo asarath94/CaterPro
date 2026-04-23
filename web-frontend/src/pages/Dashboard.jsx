@@ -1,76 +1,40 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Users, CalendarDays, Utensils, ArrowRight, Clock, MapPin, PlusCircle, ChefHat, Contact2, Loader2, AlertCircle } from 'lucide-react';
 import API_BASE from '../config/api';
+import useSWR from 'swr';
+import { fetcherWithToken, apiUrl } from '../config/fetcher';
 
 const Dashboard = () => {
   const { token, user } = useAuth();
   const navigate = useNavigate();
-  
-  const [stats, setStats] = useState({
-     totalCustomers: 0,
-     totalMenu: 0,
-     totalOrders: 0
-  });
-  
-  const [nextEvents, setNextEvents] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
 
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const [cRes, mRes, oRes] = await Promise.all([
-          fetch(`${API_BASE}/api/customers`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API_BASE}/api/menu`, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(`${API_BASE}/api/orders?filter=upcoming`, { headers: { 'Authorization': `Bearer ${token}` } }),
-        ]);
+  const { data: customers = [] } = useSWR(token ? [apiUrl('/api/customers'), token] : null, fetcherWithToken);
+  const { data: menu = [] } = useSWR(token ? [apiUrl('/api/menu'), token] : null, fetcherWithToken);
+  const { data: upcomingOrders = [], error, isLoading } = useSWR(token ? [apiUrl('/api/orders?filter=upcoming'), token] : null, fetcherWithToken);
 
-        if (!cRes.ok || !mRes.ok || !oRes.ok) throw new Error('Failed to synchronize dashboard metrics');
+  const stats = useMemo(() => ({
+    totalCustomers: customers.length,
+    totalMenu: menu.length,
+    totalOrders: upcomingOrders.length,
+  }), [customers, menu, upcomingOrders]);
 
-        const customers = await cRes.json();
-        const menu = await mRes.json();
-        const upcomingOrders = await oRes.json();
-
-        setStats({
-          totalCustomers: customers.length,
-          totalMenu: menu.length,
-          totalOrders: upcomingOrders.length
+  const nextEvents = useMemo(() => {
+    let flatEvents = [];
+    upcomingOrders.forEach(order => {
+      if (order.subEvents) {
+        order.subEvents.forEach(ev => {
+          flatEvents.push({ ...ev, orderId: order._id, customerName: order.customer?.name || 'Unknown Client' });
         });
-
-        // Parse and sort sub-events mathematically across all orders
-        let flatEvents = [];
-        upcomingOrders.forEach(order => {
-           if (order.subEvents) {
-              order.subEvents.forEach(ev => {
-                 flatEvents.push({
-                    ...ev,
-                    orderId: order._id,
-                    customerName: order.customer?.name || 'Unknown Client'
-                 });
-              });
-           }
-        });
-
-        // Filter and sort for the immediate chronological future
-        const now = new Date();
-        const filteredEvents = flatEvents
-           .filter(e => new Date(e.date) >= now)
-           .sort((a, b) => new Date(a.date) - new Date(b.date))
-           .slice(0, 3); // Grab strictly the top 3
-
-        setNextEvents(filteredEvents);
-        
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    fetchDashboardData();
-  }, [token]);
+    });
+    const now = new Date();
+    return flatEvents
+      .filter(e => new Date(e.date) >= now)
+      .sort((a, b) => new Date(a.date) - new Date(b.date))
+      .slice(0, 3);
+  }, [upcomingOrders]);
 
   if (loading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-10 h-10 animate-spin text-blue-600" /></div>;
   if (error) return <div className="p-8 text-red-600"><AlertCircle className="w-6 h-6 inline mr-2"/> {error}</div>;

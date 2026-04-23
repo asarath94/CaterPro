@@ -1,40 +1,23 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image, TextInput } from 'react-native';
-import { fetchApi } from '../config/api';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Image, TextInput, RefreshControl } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import useSWR from 'swr';
+import { swrFetcher } from '../config/fetcher';
 
 export default function CustomersScreen({ navigation }) {
     const { token } = useAuth();
-    const [customers, setCustomers] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
 
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
-            loadCustomers();
-        });
-        return unsubscribe;
-    }, [navigation]);
-
-    const loadCustomers = async () => {
-        try {
-            const data = await fetchApi('/api/customers', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            // Sort alphabetically by name
-            const sorted = data.sort((a,b) => a.name.localeCompare(b.name));
-            setCustomers(sorted);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const { data: rawCustomers = [], error, isLoading, isValidating, mutate } = useSWR(
+        token ? ['/api/customers', token] : null,
+        swrFetcher
+    );
 
     const filteredCustomers = useMemo(() => {
-        return customers.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
-    }, [customers, searchQuery]);
+        const sorted = [...rawCustomers].sort((a,b) => a.name.localeCompare(b.name));
+        return sorted.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
+    }, [rawCustomers, searchQuery]);
 
     const renderCustomerItem = ({ item }) => (
         <TouchableOpacity 
@@ -72,7 +55,7 @@ export default function CustomersScreen({ navigation }) {
         </TouchableOpacity>
     );
 
-    if (loading) {
+    if (isLoading && !rawCustomers.length) {
         return <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>;
     }
 
@@ -106,6 +89,7 @@ export default function CustomersScreen({ navigation }) {
                 renderItem={renderCustomerItem}
                 contentContainerStyle={styles.list}
                 showsVerticalScrollIndicator={false}
+                refreshControl={<RefreshControl refreshing={isValidating} onRefresh={mutate} color="#2563eb" />}
             />
 
             <TouchableOpacity 

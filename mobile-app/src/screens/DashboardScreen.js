@@ -1,77 +1,59 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity, ActivityIndicator, Image, Modal } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { fetchApi } from '../config/api';
 import { Ionicons } from '@expo/vector-icons';
+import useSWR from 'swr';
+import { swrFetcher } from '../config/fetcher';
 
 export default function DashboardScreen({ navigation }) {
     const { token, admin, logout } = useAuth();
-    const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
     const [optionsVisible, setOptionsVisible] = useState(false);
     
-    // States for the 3 main metrics
-    const [stats, setStats] = useState({ customers: 0, menus: 0, orders: 0 });
-    const [nextEvents, setNextEvents] = useState([]);
+    // SWR Parallel Data Fetching
+    const { data: customersData = [], mutate: mutateCustomers } = useSWR(token ? ['/api/customers', token] : null, swrFetcher);
+    const { data: menusData = [], mutate: mutateMenus } = useSWR(token ? ['/api/menu', token] : null, swrFetcher);
+    const { data: ordersData = [], mutate: mutateOrders, error, isLoading, isValidating } = useSWR(
+        token ? ['/api/orders?filter=upcoming', token] : null, 
+        swrFetcher
+    );
 
-    const loadData = async () => {
-        try {
-            const headers = { 'Authorization': `Bearer ${token}` };
-            
-            // Promise.all to fetch all metrics concurrently exactly like the Web dashboard
-            const [customersData, menusData, ordersData] = await Promise.all([
-                fetchApi('/api/customers', { headers }),
-                fetchApi('/api/menu', { headers }),
-                fetchApi('/api/orders?filter=upcoming', { headers })
-            ]);
+    const stats = useMemo(() => ({
+        customers: customersData.length || 0,
+        menus: menusData.length || 0,
+        orders: ordersData.length || 0
+    }), [customersData, menusData, ordersData]);
 
-            setStats({
-                customers: customersData.length || 0,
-                menus: menusData.length || 0,
-                orders: ordersData.length || 0
-            });
-
-            // Calculate 'Next Up' timeline
-            const allSubEvents = [];
-            ordersData.forEach(order => {
-                if (order.subEvents) {
-                    order.subEvents.forEach(ev => {
-                        allSubEvents.push({
-                            ...ev,
-                            orderId: order._id,
-                            customerName: order.customer.name,
-                            orderStatus: order.status
-                        });
+    const nextEvents = useMemo(() => {
+        const allSubEvents = [];
+        ordersData.forEach(order => {
+            if (order.subEvents) {
+                order.subEvents.forEach(ev => {
+                    allSubEvents.push({
+                        ...ev,
+                        orderId: order._id,
+                        customerName: order.customer?.name || 'Unknown',
+                        orderStatus: order.status
                     });
-                }
-            });
+                });
+            }
+        });
 
-            const now = new Date();
-            const upcoming = allSubEvents
-                .filter(ev => new Date(ev.date) > now)
-                .sort((a, b) => new Date(a.date) - new Date(b.date))
-                .slice(0, 3); // Grab closest 3
-
-            setNextEvents(upcoming);
-
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setLoading(false);
-            setRefreshing(false);
-        }
-    };
-
-    useEffect(() => {
-        loadData();
-    }, []);
+        const now = new Date();
+        return allSubEvents
+            .filter(ev => new Date(ev.date) > now)
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+            .slice(0, 3);
+    }, [ordersData]);
 
     const onRefresh = () => {
-        setRefreshing(true);
-        loadData();
+        mutateCustomers();
+        mutateMenus();
+        mutateOrders();
     };
 
-    if (loading) {
+
+    if (isLoading && !ordersData.length) {
         return (
             <View style={styles.center}>
                 <ActivityIndicator size="large" color="#2563eb" />
@@ -101,7 +83,7 @@ export default function DashboardScreen({ navigation }) {
             <ScrollView 
                 style={styles.container} 
                 showsVerticalScrollIndicator={false}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />}
+                refreshControl={<RefreshControl refreshing={isValidating} onRefresh={onRefresh} tintColor="#2563eb" />}
             >
             {/* Metric Cards Grid */}
             <View style={styles.statsGrid}>

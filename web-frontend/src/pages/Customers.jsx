@@ -1,37 +1,20 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Users, Phone, Mail, MapPin, Loader2, AlertCircle, Search, X, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
-import API_BASE from '../config/api';
+import useSWR from 'swr';
+import { fetcherWithToken, apiUrl } from '../config/fetcher';
 
 const Customers = () => {
-  const [customers, setCustomers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const fetchCustomers = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/api/customers`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error('Failed to fetch customers');
-        const data = await res.json();
-        setCustomers(data);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchCustomers();
-    fetchCustomers();
-  }, [token]);
+  const { data: customers = [], error, isLoading } = useSWR(
+    token ? [apiUrl('/api/customers'), token] : null,
+    fetcherWithToken
+  );
 
   const filteredCustomers = useMemo(() => {
     return customers.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()));
@@ -73,13 +56,13 @@ const Customers = () => {
         </button>
       </div>
 
-      {loading ? (
+      {isLoading ? (
         <div className="flex justify-center py-20">
           <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
         </div>
       ) : error ? (
         <div className="p-4 bg-red-100 text-red-700 rounded-lg flex items-center gap-2">
-          <AlertCircle className="w-5 h-5" /> {error}
+          <AlertCircle className="w-5 h-5" /> {error.message}
         </div>
       ) : filteredCustomers.length === 0 ? (
         <div className="text-center text-slate-400 py-20 border-2 border-dashed border-slate-200 rounded-2xl">

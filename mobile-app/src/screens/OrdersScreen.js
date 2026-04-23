@@ -1,42 +1,27 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
-import { fetchApi } from '../config/api';
+import React, { useState, useMemo } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import useSWR from 'swr';
+import { swrFetcher } from '../config/fetcher';
 
 export default function OrdersScreen({ navigation }) {
     const { token } = useAuth();
-    const [orders, setOrders] = useState([]);
-    const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('upcoming');
 
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
-            loadOrders(activeTab);
-        });
-        return unsubscribe;
-    }, [navigation, activeTab]);
+    const { data: rawOrders = [], error, isLoading, isValidating, mutate } = useSWR(
+        token ? [`/api/orders?filter=${activeTab}`, token] : null,
+        swrFetcher
+    );
 
-    const loadOrders = async (tabStr = activeTab) => {
-        setLoading(true);
-        try {
-            const data = await fetchApi(`/api/orders?filter=${tabStr}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            // Sort to show newest first
-            const sorted = data.sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
-            setOrders(sorted);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const orders = useMemo(() => {
+        return [...rawOrders].sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }, [rawOrders]);
 
     const handleTabChange = (tab) => {
         setActiveTab(tab);
-        loadOrders(tab);
     }
+
 
     const renderOrderItem = ({ item }) => {
         // Find smallest and largest dates in subEvents
@@ -109,7 +94,7 @@ export default function OrdersScreen({ navigation }) {
                 </TouchableOpacity>
             </View>
 
-            {loading ? (
+            {isLoading && !rawOrders.length ? (
                 <View style={styles.center}><ActivityIndicator size="large" color="#2563eb" /></View>
             ) : (
                 <FlatList
@@ -118,6 +103,7 @@ export default function OrdersScreen({ navigation }) {
                     renderItem={renderOrderItem}
                     contentContainerStyle={styles.list}
                     showsVerticalScrollIndicator={false}
+                    refreshControl={<RefreshControl refreshing={isValidating} onRefresh={mutate} color="#2563eb" />}
                 />
             )}
         </View>

@@ -1,43 +1,21 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Loader2, AlertCircle, Calendar, MapPin, Users, ClipboardList } from 'lucide-react';
 import clsx from 'clsx';
-import API_BASE from '../config/api';
+import useSWR from 'swr';
+import { fetcherWithToken, apiUrl } from '../config/fetcher';
 
 const Orders = () => {
   const [activeTab, setActiveTab] = useState('upcoming');
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  const fetchOrders = async (filter) => {
-    setLoading(true);
-    setError('');
-    try {
-      const res = await fetch(`${API_BASE}/api/orders?filter=${filter}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      if (!res.ok) {
-        throw new Error('Failed to fetch orders');
-      }
-      const data = await res.json();
-      setOrders(data);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchOrders(activeTab);
-  }, [activeTab]);
+  const { data: orders = [], error, isLoading } = useSWR(
+    token ? [apiUrl(`/api/orders?filter=${activeTab}`), token] : null,
+    fetcherWithToken
+  );
 
   return (
     <div className="p-8 h-full flex flex-col max-w-7xl mx-auto overflow-y-auto relative">
