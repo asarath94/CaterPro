@@ -4,6 +4,10 @@ Welcome to the **Catering Manager** application! This is a robust, enterprise-gr
 
 Together, these three environments seamlessly communicate to deliver a top-tier operational management system for Catering businesses, bringing total control over Client CRM, Master Menu provisioning, and intense multi-event Order pipelines directly to your browsers and mobile devices.
 
+Live app and Website access is as below:
+APK Download link: https://drive.google.com/file/d/1xVN8t3jcPmtgzaLLVR_M-MkZ7ZbKWBiE/view?usp=sharing
+Live site link: https://cater-pro-drab.vercel.app/
+
 ---
 
 ## 🏗️ Architecture & Modules
