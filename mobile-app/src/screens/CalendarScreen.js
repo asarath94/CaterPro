@@ -1,77 +1,52 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { fetchApi } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
+import useSWR from 'swr';
+import { swrFetcher } from '../config/fetcher';
 
 export default function CalendarScreen({ navigation }) {
     const { token } = useAuth();
-    const [loading, setLoading] = useState(true);
-    
-    // Marked dates config for the Calendar library
-    const [markedDates, setMarkedDates] = useState({});
-    
-    // State to hold raw subEvents grouped by the date string (YYYY-MM-DD)
-    const [eventsMap, setEventsMap] = useState({});
-    
+
     // Modal state
     const [selectedDate, setSelectedDate] = useState(null);
     const [modalVisible, setModalVisible] = useState(false);
 
-    useEffect(() => {
-        const unsubscribe = navigation.addListener('focus', () => {
-            loadCalendar();
+    const { data: calendarData = [], isLoading: loading } = useSWR(
+        token ? ['/api/calendar', token] : null,
+        swrFetcher
+    );
+
+    const { markedDates, eventsMap } = useMemo(() => {
+        const marks = {};
+        const evMap = {};
+        calendarData.forEach(ev => {
+            const d = new Date(ev.start);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const dateStr = `${year}-${month}-${day}`;
+
+            marks[dateStr] = {
+                marked: true,
+                dotColor: '#2563eb',
+                activeOpacity: 0.7
+            };
+
+            if (!evMap[dateStr]) evMap[dateStr] = [];
+            evMap[dateStr].push({
+                date: ev.start,
+                eventName: ev.title.split(' - ')[1] || 'Event',
+                orderId: ev.orderId,
+                customerName: ev.customerName,
+                guestCount: ev.guestCount,
+                location: ev.location,
+                _id: ev.id
+            });
         });
-        return unsubscribe;
-    }, [navigation]);
-
-    const loadCalendar = async () => {
-        try {
-            const data = await fetchApi('/api/calendar', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-
-            // Map data from /api/calendar natively (backend already flattens events)
-            const marks = {};
-            const evMap = {};
-
-            data.forEach(ev => {
-                // Extract localized YYYY-MM-DD using 'start' property which holds the date
-                const d = new Date(ev.start);
-                const year = d.getFullYear();
-                const month = String(d.getMonth() + 1).padStart(2, '0');
-                const day = String(d.getDate()).padStart(2, '0');
-                const dateStr = `${year}-${month}-${day}`;
-
-                // Setup visual marker for the specific date
-                marks[dateStr] = { 
-                    marked: true, 
-                    dotColor: '#2563eb', 
-                    activeOpacity: 0.7 
-                };
-
-                // Store actual data payload inside the Map for fast lookup when day is clicked
-                if (!evMap[dateStr]) evMap[dateStr] = [];
-                evMap[dateStr].push({
-                    date: ev.start, // Map start to date for display
-                    eventName: ev.title.split(' - ')[1] || 'Event',
-                    orderId: ev.orderId,
-                    customerName: ev.customerName,
-                    guestCount: ev.guestCount,
-                    location: ev.location,
-                    _id: ev.id
-                });
-            });
-
-            setMarkedDates(marks);
-            setEventsMap(evMap);
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
+        return { markedDates: marks, eventsMap: evMap };
+    }, [calendarData]);
 
     const handleDayPress = (day) => {
         const dateStr = day.dateString;
@@ -143,8 +118,8 @@ export default function CalendarScreen({ navigation }) {
 
                         <ScrollView style={styles.eventList} showsVerticalScrollIndicator={false}>
                             {selectedDate?.events.map((ev, i) => (
-                                <TouchableOpacity 
-                                    key={`${ev._id}-${i}`} 
+                                <TouchableOpacity
+                                    key={`${ev._id}-${i}`}
                                     style={styles.eventCard}
                                     onPress={() => {
                                         setModalVisible(false);
@@ -181,15 +156,15 @@ const styles = StyleSheet.create({
     header: { padding: 20, paddingTop: 10, paddingBottom: 15 },
     title: { fontSize: 28, fontWeight: '900', color: '#111827' },
     subtitle: { fontSize: 13, color: '#6b7280', marginTop: 4 },
-    calendarWrapper: { 
-        marginHorizontal: 15, 
-        backgroundColor: '#fff', 
-        borderRadius: 16, 
+    calendarWrapper: {
+        marginHorizontal: 15,
+        backgroundColor: '#fff',
+        borderRadius: 16,
         paddingVertical: 10,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 4 
+        shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 4
     },
     calendar: { borderRadius: 16 },
-    
+
     // Modal Styles
     modalOverlay: { flex: 1, backgroundColor: 'rgba(15,23,42,0.4)', justifyContent: 'flex-end' },
     modalContent: { backgroundColor: '#f9fafb', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 20, paddingTop: 24, paddingBottom: 40, maxHeight: '80%' },

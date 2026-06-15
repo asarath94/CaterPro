@@ -12,6 +12,7 @@ const Tab = createBottomTabNavigator();
 export default function MainTabs() {
   return (
     <Tab.Navigator
+      lazy
       screenOptions={({ route }) => ({
         headerStyle: { backgroundColor: '#0f172a' },
         headerTintColor: '#fff',

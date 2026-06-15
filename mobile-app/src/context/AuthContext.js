@@ -15,16 +15,21 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const loadToken = async () => {
+    let storedToken = null;
     try {
-      const storedToken = await SecureStore.getItemAsync('adminToken');
+      storedToken = await SecureStore.getItemAsync('adminToken');
       if (storedToken) {
         setToken(storedToken);
-        await hydrateAdminProfile(storedToken);
       }
     } catch (e) {
       console.log('Error loading token natively', e);
     } finally {
+      // Unblock the app immediately after the local SecureStore read — no network wait
       setIsLoading(false);
+    }
+    // Fire profile hydration in the background; logout() is called on 401
+    if (storedToken) {
+      hydrateAdminProfile(storedToken);
     }
   };
 
